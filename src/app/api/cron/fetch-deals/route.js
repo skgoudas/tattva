@@ -5,30 +5,30 @@ import { fetchGoogleFlights } from '@/lib/dataforseo';
 // Configurable routes to search for
 const ROUTES = [
     // BLR - Bangalore
-    { origin: 'BLR', destination: 'JFK', name: 'New York', image: 'https://images.unsplash.com/photo-1534430480872-3498386e7856?q=80&w=800&auto=format&fit=crop' },
-    { origin: 'BLR', destination: 'LHR', name: 'London', image: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?q=80&w=800&auto=format&fit=crop' },
-    { origin: 'BLR', destination: 'BKK', name: 'Bangkok', image: 'https://images.unsplash.com/photo-1563492065599-3520f775eeed?q=80&w=800&auto=format&fit=crop' },
-    { origin: 'BLR', destination: 'DXB', name: 'Dubai', image: 'https://images.unsplash.com/photo-1518684079-3c830dcef6c0?q=80&w=800&auto=format&fit=crop' },
-    { origin: 'BLR', destination: 'CDG', name: 'Paris', image: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?q=80&w=800&auto=format&fit=crop' },
+    { origin: 'BLR', destination: 'JFK', name: 'New York', typicalPrice: 90000, image: 'https://images.unsplash.com/photo-1534430480872-3498386e7856?q=80&w=800&auto=format&fit=crop' },
+    { origin: 'BLR', destination: 'LHR', name: 'London', typicalPrice: 75000, image: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?q=80&w=800&auto=format&fit=crop' },
+    { origin: 'BLR', destination: 'BKK', name: 'Bangkok', typicalPrice: 28000, image: 'https://images.unsplash.com/photo-1563492065599-3520f775eeed?q=80&w=800&auto=format&fit=crop' },
+    { origin: 'BLR', destination: 'DXB', name: 'Dubai', typicalPrice: 30000, image: 'https://images.unsplash.com/photo-1518684079-3c830dcef6c0?q=80&w=800&auto=format&fit=crop' },
+    { origin: 'BLR', destination: 'CDG', name: 'Paris', typicalPrice: 70000, image: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?q=80&w=800&auto=format&fit=crop' },
 
     // DEL - Delhi
-    { origin: 'DEL', destination: 'LHR', name: 'London', image: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?q=80&w=800&auto=format&fit=crop' },
-    { origin: 'DEL', destination: 'DXB', name: 'Dubai', image: 'https://images.unsplash.com/photo-1518684079-3c830dcef6c0?q=80&w=800&auto=format&fit=crop' },
-    { origin: 'DEL', destination: 'CDG', name: 'Paris', image: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?q=80&w=800&auto=format&fit=crop' },
-    { origin: 'DEL', destination: 'SIN', name: 'Singapore', image: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?q=80&w=800&auto=format&fit=crop' },
+    { origin: 'DEL', destination: 'LHR', name: 'London', typicalPrice: 70000, image: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?q=80&w=800&auto=format&fit=crop' },
+    { origin: 'DEL', destination: 'DXB', name: 'Dubai', typicalPrice: 25000, image: 'https://images.unsplash.com/photo-1518684079-3c830dcef6c0?q=80&w=800&auto=format&fit=crop' },
+    { origin: 'DEL', destination: 'CDG', name: 'Paris', typicalPrice: 65000, image: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?q=80&w=800&auto=format&fit=crop' },
+    { origin: 'DEL', destination: 'SIN', name: 'Singapore', typicalPrice: 35000, image: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?q=80&w=800&auto=format&fit=crop' },
 
     // BOM - Mumbai
-    { origin: 'BOM', destination: 'LHR', name: 'London', image: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?q=80&w=800&auto=format&fit=crop' },
-    { origin: 'BOM', destination: 'DXB', name: 'Dubai', image: 'https://images.unsplash.com/photo-1518684079-3c830dcef6c0?q=80&w=800&auto=format&fit=crop' },
-    { origin: 'BOM', destination: 'JFK', name: 'New York', image: 'https://images.unsplash.com/photo-1534430480872-3498386e7856?q=80&w=800&auto=format&fit=crop' },
+    { origin: 'BOM', destination: 'LHR', name: 'London', typicalPrice: 65000, image: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?q=80&w=800&auto=format&fit=crop' },
+    { origin: 'BOM', destination: 'DXB', name: 'Dubai', typicalPrice: 22000, image: 'https://images.unsplash.com/photo-1518684079-3c830dcef6c0?q=80&w=800&auto=format&fit=crop' },
+    { origin: 'BOM', destination: 'JFK', name: 'New York', typicalPrice: 85000, image: 'https://images.unsplash.com/photo-1534430480872-3498386e7856?q=80&w=800&auto=format&fit=crop' },
 
     // MAA - Chennai
-    { origin: 'MAA', destination: 'SIN', name: 'Singapore', image: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?q=80&w=800&auto=format&fit=crop' },
-    { origin: 'MAA', destination: 'BKK', name: 'Bangkok', image: 'https://images.unsplash.com/photo-1563492065599-3520f775eeed?q=80&w=800&auto=format&fit=crop' },
+    { origin: 'MAA', destination: 'SIN', name: 'Singapore', typicalPrice: 30000, image: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?q=80&w=800&auto=format&fit=crop' },
+    { origin: 'MAA', destination: 'BKK', name: 'Bangkok', typicalPrice: 25000, image: 'https://images.unsplash.com/photo-1563492065599-3520f775eeed?q=80&w=800&auto=format&fit=crop' },
 
     // HYD - Hyderabad
-    { origin: 'HYD', destination: 'DXB', name: 'Dubai', image: 'https://images.unsplash.com/photo-1518684079-3c830dcef6c0?q=80&w=800&auto=format&fit=crop' },
-    { origin: 'HYD', destination: 'BKK', name: 'Bangkok', image: 'https://images.unsplash.com/photo-1563492065599-3520f775eeed?q=80&w=800&auto=format&fit=crop' }
+    { origin: 'HYD', destination: 'DXB', name: 'Dubai', typicalPrice: 28000, image: 'https://images.unsplash.com/photo-1518684079-3c830dcef6c0?q=80&w=800&auto=format&fit=crop' },
+    { origin: 'HYD', destination: 'BKK', name: 'Bangkok', typicalPrice: 26000, image: 'https://images.unsplash.com/photo-1563492065599-3520f775eeed?q=80&w=800&auto=format&fit=crop' }
 ];
 
 export async function GET(request) {
@@ -111,7 +111,18 @@ export async function GET(request) {
                 const bookingLink = bestFlight.url || `https://www.google.com/travel/flights?q=Flights%20to%20${route.destination}%20from%20${route.origin}%20on%20${departureDate}%20through%20${returnDate}`;
 
                 if (priceVal > 0) {
-                    // Insert unconditional 'Best Price' deal
+
+                    // Calculate savings
+                    let savingsText = "Best Price";
+                    let originalPriceVal = null;
+
+                    if (route.typicalPrice && route.typicalPrice > priceVal) {
+                        const savingsPercent = Math.round(((route.typicalPrice - priceVal) / route.typicalPrice) * 100);
+                        savingsText = `~${savingsPercent}%`;
+                        originalPriceVal = route.typicalPrice;
+                    }
+
+                    // Insert deal
                     await db.execute({
                         sql: `INSERT INTO deals (origin, destination, price, original_price, dates, airline, savings, image, booking_link, created_at)
                               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
@@ -119,10 +130,10 @@ export async function GET(request) {
                             route.origin,
                             route.destination,
                             priceVal,
-                            null, // No original price comparison available
+                            originalPriceVal,
                             `${departureDate} - ${returnDate}`,
                             airline,
-                            "Best Price", // Label
+                            savingsText,
                             route.image,
                             bookingLink
                         ]
