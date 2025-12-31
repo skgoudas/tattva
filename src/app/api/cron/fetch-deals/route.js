@@ -8,18 +8,18 @@ const ROUTES = [
     { origin: 'BLR', destination: 'JFK', name: 'New York', image: 'https://images.unsplash.com/photo-1534430480872-3498386e7856?q=80&w=800&auto=format&fit=crop' },
     { origin: 'BLR', destination: 'LHR', name: 'London', image: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?q=80&w=800&auto=format&fit=crop' },
     { origin: 'BLR', destination: 'BKK', name: 'Bangkok', image: 'https://images.unsplash.com/photo-1563492065599-3520f775eeed?q=80&w=800&auto=format&fit=crop' },
-    { origin: 'BLR', destination: 'DXB', name: 'Dubai', image: 'https://images.unsplash.com/photo-1512453979798-5ea9ba6a80e4?q=80&w=800&auto=format&fit=crop' },
+    { origin: 'BLR', destination: 'DXB', name: 'Dubai', image: 'https://images.unsplash.com/photo-1518684079-3c830dcef6c0?q=80&w=800&auto=format&fit=crop' },
     { origin: 'BLR', destination: 'CDG', name: 'Paris', image: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?q=80&w=800&auto=format&fit=crop' },
 
     // DEL - Delhi
     { origin: 'DEL', destination: 'LHR', name: 'London', image: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?q=80&w=800&auto=format&fit=crop' },
-    { origin: 'DEL', destination: 'DXB', name: 'Dubai', image: 'https://images.unsplash.com/photo-1512453979798-5ea9ba6a80e4?q=80&w=800&auto=format&fit=crop' },
+    { origin: 'DEL', destination: 'DXB', name: 'Dubai', image: 'https://images.unsplash.com/photo-1518684079-3c830dcef6c0?q=80&w=800&auto=format&fit=crop' },
     { origin: 'DEL', destination: 'CDG', name: 'Paris', image: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?q=80&w=800&auto=format&fit=crop' },
     { origin: 'DEL', destination: 'SIN', name: 'Singapore', image: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?q=80&w=800&auto=format&fit=crop' },
 
     // BOM - Mumbai
     { origin: 'BOM', destination: 'LHR', name: 'London', image: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?q=80&w=800&auto=format&fit=crop' },
-    { origin: 'BOM', destination: 'DXB', name: 'Dubai', image: 'https://images.unsplash.com/photo-1512453979798-5ea9ba6a80e4?q=80&w=800&auto=format&fit=crop' },
+    { origin: 'BOM', destination: 'DXB', name: 'Dubai', image: 'https://images.unsplash.com/photo-1518684079-3c830dcef6c0?q=80&w=800&auto=format&fit=crop' },
     { origin: 'BOM', destination: 'JFK', name: 'New York', image: 'https://images.unsplash.com/photo-1534430480872-3498386e7856?q=80&w=800&auto=format&fit=crop' },
 
     // MAA - Chennai
@@ -27,7 +27,7 @@ const ROUTES = [
     { origin: 'MAA', destination: 'BKK', name: 'Bangkok', image: 'https://images.unsplash.com/photo-1563492065599-3520f775eeed?q=80&w=800&auto=format&fit=crop' },
 
     // HYD - Hyderabad
-    { origin: 'HYD', destination: 'DXB', name: 'Dubai', image: 'https://images.unsplash.com/photo-1512453979798-5ea9ba6a80e4?q=80&w=800&auto=format&fit=crop' },
+    { origin: 'HYD', destination: 'DXB', name: 'Dubai', image: 'https://images.unsplash.com/photo-1518684079-3c830dcef6c0?q=80&w=800&auto=format&fit=crop' },
     { origin: 'HYD', destination: 'BKK', name: 'Bangkok', image: 'https://images.unsplash.com/photo-1563492065599-3520f775eeed?q=80&w=800&auto=format&fit=crop' }
 ];
 
