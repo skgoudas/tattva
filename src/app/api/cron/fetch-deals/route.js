@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server';
 import db from '@/lib/db';
-import { getJson } from 'serpapi';
+import { fetchGoogleFlights } from '@/lib/dataforseo';
 
 // Configurable routes to search for
-// In a real app, this would be more dynamic or extensive
 const ROUTES = [
     // BLR - Bangalore
     { origin: 'BLR', destination: 'JFK', name: 'New York', image: 'https://images.unsplash.com/photo-1534430480872-3498386e7856?q=80&w=800&auto=format&fit=crop' },
@@ -39,10 +38,10 @@ export async function GET(request) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (!process.env.SERPAPI_API_KEY) {
+    if (!process.env.DATAFORSEO_LOGIN || !process.env.DATAFORSEO_PASSWORD) {
         return NextResponse.json({
             error: 'Configuration Error',
-            message: 'SERPAPI_API_KEY is missing. Please add it to .env.local'
+            message: 'DATAFORSEO credentials missing. Please add them to .env.local'
         }, { status: 500 });
     }
 
@@ -60,63 +59,70 @@ export async function GET(request) {
             dateReturn.setDate(dateReturn.getDate() + 7); // 1 week trip
             const returnDate = dateReturn.toISOString().split('T')[0];
 
-            // Wrap getJson in a promise
-            const results = await new Promise((resolve, reject) => {
-                getJson({
-                    engine: "google_flights",
-                    departure_id: route.origin,
-                    arrival_id: route.destination,
-                    outbound_date: departureDate,
-                    return_date: returnDate,
-                    currency: "INR",
-                    gl: "in",
-                    hl: "en",
-                    api_key: process.env.SERPAPI_API_KEY
-                }, (json) => {
-                    resolve(json);
-                });
+            // Fetch from DataForSEO
+            const data = await fetchGoogleFlights({
+                origin: route.origin,
+                destination: route.destination,
+                departureDate,
+                returnDate
             });
 
-            const bestFlights = results.best_flights?.[0];
 
-            if (bestFlights) {
-                // Extract price insights if available
-                const priceInsights = results.price_insights;
+            // Parse response - DataForSEO Organic structure
+            const task = data.tasks?.[0];
+            const result = task?.result?.[0];
+            const items = result?.items || [];
 
-                // Parse the current price (remove currency symbol and commas)
-                const priceStr = String(bestFlights.price);
-                const currentPrice = parseInt(priceStr.replace(/[^0-9]/g, ''));
-                const airline = bestFlights.flights?.[0]?.airline || 'Multiple Airlines';
+            // Find the google_flights item in the SERP
+            const flightWidget = items.find(i => i.type === 'google_flights');
+            const flightItems = flightWidget?.items || [];
 
-                let originalPriceVal = currentPrice;
-                let savingsText = '';
-                let savingsPercent = 0;
+            // Find the cheapest flight (first item in the widget list typically)
+            const bestFlight = flightItems[0];
 
-                if (priceInsights && priceInsights.typical_price_range) {
-                    // Use the high end of the typical range as the "original" or "comparison" price
-                    const typicalHigh = priceInsights.typical_price_range[1];
-                    if (typicalHigh > currentPrice) {
-                        originalPriceVal = typicalHigh;
-                        savingsPercent = Math.round(((typicalHigh - currentPrice) / typicalHigh) * 100);
-                        savingsText = `~${savingsPercent}%`;
+            if (bestFlight) {
+                // Parse description for price (Format: "Airline    Duration   Nonstop   from ₹19,517")
+                // We look for the last number in the string which is usually the price
+                const description = bestFlight.description || '';
+
+                // Regex to find price: looks for 'from' followed by currency symbol (optional) and digits/commas
+                // Or just grab the last sequence of digits/commas
+                const priceMatch = description.match(/from\s+[^0-9]*([\d,]+)/i);
+
+                let priceVal = 0;
+                if (priceMatch && priceMatch[1]) {
+                    priceVal = parseInt(priceMatch[1].replace(/,/g, ''));
+                } else {
+                    // Fallback: try to find any large number at the end
+                    const matches = description.match(/([\d,]+)/g);
+                    if (matches && matches.length > 0) {
+                        const lastNum = matches[matches.length - 1];
+                        priceVal = parseInt(lastNum.replace(/,/g, ''));
                     }
                 }
 
-                // Only save deal if savings are 40% or more
-                if (savingsPercent >= 40) {
-                    const bookingLink = results.search_metadata?.google_flights_url || 'https://www.google.com/travel/flights';
+                // Parse airline from description (start of string until multiple spaces or time?)
+                // Simple heuristic: Take the first word or two? Or split by multiple spaces.
+                // "IndiGo      3h 55m..." -> "IndiGo"
+                const parts = description.split(/\s{2,}/); // Split by 2+ spaces
+                const airline = parts[0] || 'Multiple Airlines';
 
+                // Use the direct URL provided in the element if available
+                const bookingLink = bestFlight.url || `https://www.google.com/travel/flights?q=Flights%20to%20${route.destination}%20from%20${route.origin}%20on%20${departureDate}%20through%20${returnDate}`;
+
+                if (priceVal > 0) {
+                    // Insert unconditional 'Best Price' deal
                     await db.execute({
                         sql: `INSERT INTO deals (origin, destination, price, original_price, dates, airline, savings, image, booking_link, created_at)
                               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
                         args: [
                             route.origin,
                             route.destination,
-                            currentPrice,
-                            originalPriceVal,
+                            priceVal,
+                            null, // No original price comparison available
                             `${departureDate} - ${returnDate}`,
                             airline,
-                            savingsText,
+                            "Best Price", // Label
                             route.image,
                             bookingLink
                         ]
