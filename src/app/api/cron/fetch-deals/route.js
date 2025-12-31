@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import db from '@/lib/db';
-import { fetchGoogleFlights } from '@/lib/dataforseo';
+import { fetchGoogleFlights } from '@/lib/dataforseo'; // Keep this for DataForSEO provider
+import { fetchGoogleFlightsSerpApi } from '@/lib/serpapi'; // Add this for SerpApi provider
 
 // Configurable routes to search for
 const ROUTES = [
@@ -34,15 +35,19 @@ const ROUTES = [
 export async function GET(request) {
     // Simple protection
     const authHeader = request.headers.get('authorization');
-    if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET} `) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (!process.env.DATAFORSEO_LOGIN || !process.env.DATAFORSEO_PASSWORD) {
-        return NextResponse.json({
-            error: 'Configuration Error',
-            message: 'DATAFORSEO credentials missing. Please add them to .env.local'
-        }, { status: 500 });
+    const provider = process.env.FLIGHT_PROVIDER || 'dataforseo'; // 'dataforseo' or 'serpapi'
+    console.log(`Using Flight Provider: ${provider} `);
+
+    // Validation
+    if (provider === 'dataforseo' && (!process.env.DATAFORSEO_LOGIN || !process.env.DATAFORSEO_PASSWORD)) {
+        return NextResponse.json({ error: 'DataForSEO Credentials Missing' }, { status: 500 });
+    }
+    if (provider === 'serpapi' && !process.env.SERPAPI_API_KEY) {
+        return NextResponse.json({ error: 'SerpApi Key Missing' }, { status: 500 });
     }
 
     let newDealsCount = 0;
@@ -59,56 +64,84 @@ export async function GET(request) {
             dateReturn.setDate(dateReturn.getDate() + 7); // 1 week trip
             const returnDate = dateReturn.toISOString().split('T')[0];
 
-            // Fetch from DataForSEO
-            const data = await fetchGoogleFlights({
-                origin: route.origin,
-                destination: route.destination,
-                departureDate,
-                returnDate
-            });
+            let bestFlight = null;
+            let bookingLink = "";
 
-
-            // Parse response - DataForSEO Organic structure
-            const task = data.tasks?.[0];
-            const result = task?.result?.[0];
-            const items = result?.items || [];
-
-            // Find the google_flights item in the SERP
-            const flightWidget = items.find(i => i.type === 'google_flights');
-            const flightItems = flightWidget?.items || [];
-
-            // Find the cheapest flight (first item in the widget list typically)
-            const bestFlight = flightItems[0];
-
-            if (bestFlight) {
-                // Parse description for price (Format: "Airline    Duration   Nonstop   from ₹19,517")
-                // We look for the last number in the string which is usually the price
-                const description = bestFlight.description || '';
-
-                // Regex to find price: looks for 'from' followed by currency symbol (optional) and digits/commas
-                // Or just grab the last sequence of digits/commas
-                const priceMatch = description.match(/from\s+[^0-9]*([\d,]+)/i);
-
-                let priceVal = 0;
-                if (priceMatch && priceMatch[1]) {
-                    priceVal = parseInt(priceMatch[1].replace(/,/g, ''));
-                } else {
-                    // Fallback: try to find any large number at the end
-                    const matches = description.match(/([\d,]+)/g);
-                    if (matches && matches.length > 0) {
-                        const lastNum = matches[matches.length - 1];
-                        priceVal = parseInt(lastNum.replace(/,/g, ''));
-                    }
+            if (provider === 'serpapi') {
+                const data = await fetchGoogleFlightsSerpApi({
+                    origin: route.origin,
+                    destination: route.destination,
+                    departureDate,
+                    returnDate
+                });
+                // Parse SerpApi Response
+                const flights = data.best_flights || data.other_flights || [];
+                if (flights.length > 0) {
+                    const flight = flights[0];
+                    bestFlight = {
+                        price: flight.price, // SerpApi gives integer usually? Check schema. Often: 12345
+                        description: `${flight.airline_logo || ''} ${flight.flights?.[0]?.airline || 'Unknown'} `,
+                        // SerpApi price might be distinct.
+                        // Actually SerpApi 'price' is just integer in some versions, or object.
+                        // Let's assume standard integer or extract. Use safe handling.
+                        raw_price: flight.price
+                    };
+                    // Normalization
+                    bookingLink = data.search_metadata?.google_flights_url || `https://www.google.com/travel/flights?q=Flights%20to%20${route.destination}%20from%20${route.origin}%20on%20${departureDate}%20through%20${returnDate}`;
                 }
 
-                // Parse airline from description (start of string until multiple spaces or time?)
-                // Simple heuristic: Take the first word or two? Or split by multiple spaces.
-                // "IndiGo      3h 55m..." -> "IndiGo"
-                const parts = description.split(/\s{2,}/); // Split by 2+ spaces
-                const airline = parts[0] || 'Multiple Airlines';
+            } else {
+                // DataForSEO
+                const data = await fetchGoogleFlights({
+                    origin: route.origin,
+                    destination: route.destination,
+                    departureDate,
+                    returnDate
+                });
 
-                // Use the direct URL provided in the element if available
-                const bookingLink = bestFlight.url || `https://www.google.com/travel/flights?q=Flights%20to%20${route.destination}%20from%20${route.origin}%20on%20${departureDate}%20through%20${returnDate}`;
+                const task = data.tasks?.[0];
+                const result = task?.result?.[0];
+                const items = result?.items || [];
+                const flightWidget = items.find(i => i.type === 'google_flights');
+                const flightItems = flightWidget?.items || [];
+
+                if (flightItems.length > 0) {
+                    const item = flightItems[0];
+                    bestFlight = {
+                        description: item.description,
+                        url: item.url
+                    };
+                    bookingLink = item.url || `https://www.google.com/travel/flights?q=Flights%20to%20${route.destination}%20from%20${route.origin}%20on%20${departureDate}%20through%20${returnDate}`;
+                }
+            }
+
+            // Normalization & Price Extraction
+            if (bestFlight) {
+                let priceVal = 0;
+                let airline = 'Multiple Airlines';
+
+                if (provider === 'serpapi') {
+                    priceVal = bestFlight.raw_price;
+                    // Airline extraction from description or flight array
+                    // bestFlight.flights[0].airline could be used if available
+                    if (bestFlight.description && bestFlight.description.includes('Unknown')) {
+                        airline = 'Multiple Airlines';
+                    } else {
+                        airline = bestFlight.description.trim();
+                    }
+                } else {
+                    // DataForSEO Parsing (regex)
+                    const description = bestFlight.description || '';
+                    const priceMatch = description.match(/from\s+[^0-9]*([\d,]+)/i);
+                    if (priceMatch && priceMatch[1]) {
+                        priceVal = parseInt(priceMatch[1].replace(/,/g, ''));
+                    } else {
+                        const matches = description.match(/([\d,]+)/g);
+                        if (matches && matches.length > 0) priceVal = parseInt(matches[matches.length - 1].replace(/,/g, ''));
+                    }
+                    const parts = description.split(/\s{2,}/);
+                    airline = parts[0] || 'Multiple Airlines';
+                }
 
                 if (priceVal > 0) {
 
