@@ -8,14 +8,14 @@ const url = process.env.TURSO_DATABASE_URL || `file:${path.join(process.cwd(), '
 const authToken = process.env.TURSO_AUTH_TOKEN;
 
 const client = createClient({
-    url,
-    authToken,
+  url,
+  authToken,
 });
 
 const migrate = async () => {
-    console.log('Running migrations on:', url);
-    // Subscribers table
-    await client.execute(`
+  console.log('Running migrations on:', url);
+  // Subscribers table
+  await client.execute(`
     CREATE TABLE IF NOT EXISTS subscribers (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       email TEXT UNIQUE NOT NULL,
@@ -26,8 +26,8 @@ const migrate = async () => {
     )
   `);
 
-    // Deals table
-    await client.execute(`
+  // Deals table
+  await client.execute(`
     CREATE TABLE IF NOT EXISTS deals (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       origin TEXT NOT NULL,
@@ -42,7 +42,7 @@ const migrate = async () => {
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);
-    console.log('Migrations complete.');
+  console.log('Migrations complete.');
 };
 
 migrate().catch(console.error);
